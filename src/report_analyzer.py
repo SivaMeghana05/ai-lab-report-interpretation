@@ -192,7 +192,7 @@ class AdvancedReportAnalyzer:
             if self.primary_model:
                 try:
                     interpretation_response = self.primary_model.generate_content(interpretation_prompt)
-                    extraction_response = self.primary_model.generate_content(extraction_prompt)
+            extraction_response = self.primary_model.generate_content(extraction_prompt)
                 except Exception as e:
                     logger.warning(f"Primary model failed: {str(e)}")
             
@@ -337,42 +337,42 @@ class AdvancedReportAnalyzer:
         """Display test results with enhanced interactive UI"""
         try:
             import streamlit as st
-            st.markdown("### 🔬 Detailed Test Results")
-            
+        st.markdown("### 🔬 Detailed Test Results")
+        
             if 'Category' in df.columns and not df['Category'].empty:
-                categories = df['Category'].unique().tolist()
-                selected_category = st.selectbox("Filter by Category", ["All Categories"] + categories)
-                
-                filtered_df = df.copy()
-                if selected_category != "All Categories":
-                    filtered_df = filtered_df[filtered_df['Category'] == selected_category]
-                
-                for category in filtered_df['Category'].unique():
-                    with st.expander(f"📊 {category} Panel", expanded=True):
+        categories = df['Category'].unique().tolist()
+        selected_category = st.selectbox("Filter by Category", ["All Categories"] + categories)
+        
+        filtered_df = df.copy()
+        if selected_category != "All Categories":
+            filtered_df = filtered_df[filtered_df['Category'] == selected_category]
+        
+        for category in filtered_df['Category'].unique():
+            with st.expander(f"📊 {category} Panel", expanded=True):
                         category_df = filtered_df[filtered_df['Category'] == category]
-                        for _, row in category_df.iterrows():
-                            with st.container():
+                for _, row in category_df.iterrows():
+                    with st.container():
                                 col1, col2 = st.columns([1, 1])
-                                with col1:
-                                    st.markdown(f"### {row['Test']}")
-                                    value_color = ('🔴' if row['Status'] == 'High' else '🔵' if row['Status'] == 'Low' else '🟢')
-                                    st.markdown(f"{value_color} **Current Value:** {row['Value']}")
-                                    st.markdown(f"**Normal Range:** {row['ReferenceRange']}")
-                                with col2:
-                                    if row['Status'] != 'Normal':
-                                        severity = row.get('Severity', 'Moderate')
+                        with col1:
+                            st.markdown(f"### {row['Test']}")
+                            value_color = ('🔴' if row['Status'] == 'High' else '🔵' if row['Status'] == 'Low' else '🟢')
+                            st.markdown(f"{value_color} **Current Value:** {row['Value']}")
+                            st.markdown(f"**Normal Range:** {row['ReferenceRange']}")
+                        with col2:
+                            if row['Status'] != 'Normal':
+                                severity = row.get('Severity', 'Moderate')
                                         st.markdown(f"**Severity:** {severity}")
-                                        st.markdown("**What this means:**")
-                                        interpretation = self.generate_layman_interpretation(row['Test'], row['Status'], severity)
-                                        st.markdown(interpretation)
-                                        st.markdown("**Recommendations:**")
-                                        recommendations = self.generate_recommendations(row['Test'], row['Status'])
-                                        st.markdown(recommendations)
-                                    else:
-                                        st.markdown("✅ **Result is within normal range**")
-                                        st.markdown("Continue maintaining your healthy lifestyle and regular check-ups.")
+                                st.markdown("**What this means:**")
+                                interpretation = self.generate_layman_interpretation(row['Test'], row['Status'], severity)
+                                st.markdown(interpretation)
+                                st.markdown("**Recommendations:**")
+                                recommendations = self.generate_recommendations(row['Test'], row['Status'])
+                                st.markdown(recommendations)
+                            else:
+                                st.markdown("✅ **Result is within normal range**")
+                                st.markdown("Continue maintaining your healthy lifestyle and regular check-ups.")
                                     st.markdown("---")
-            else:
+                                    else:
                 st.dataframe(df, use_container_width=True)
         except Exception as e:
             logger.error(f"Error displaying test results: {str(e)}")

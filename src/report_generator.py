@@ -143,22 +143,22 @@ class HealthReportGenerator:
     def create_pdf_report(self, patient_data, structured_data=None, interpretation=None, visualization_service=None):
         """Create a comprehensive health report PDF"""
         try:
-            buffer = BytesIO()
-            
+        buffer = BytesIO()
+        
             # Create document
-            doc = SimpleDocTemplate(
-                buffer,
-                pagesize=letter,
-                rightMargin=0.5*inch,
-                leftMargin=0.5*inch,
+        doc = SimpleDocTemplate(
+            buffer,
+            pagesize=letter,
+            rightMargin=0.5*inch,
+            leftMargin=0.5*inch,
                 topMargin=0.75*inch,
                 bottomMargin=0.75*inch,
-                title=f"Health Report - {patient_data.get('Name', 'Patient')}",
+            title=f"Health Report - {patient_data.get('Name', 'Patient')}",
                 author="HealthLensAI",
-                subject="Medical Lab Report Analysis",
-                keywords="health, medical, lab, report, analysis"
-            )
-            
+            subject="Medical Lab Report Analysis",
+            keywords="health, medical, lab, report, analysis"
+        )
+        
             # Create page templates with headers and footers
             def header_footer(canvas, doc):
                 canvas.saveState()
@@ -181,7 +181,7 @@ class HealthReportGenerator:
                 
                 canvas.restoreState()
             
-            # Create page templates
+        # Create page templates
             frame = Frame(
                 doc.leftMargin, 
                 doc.bottomMargin, 
@@ -197,31 +197,31 @@ class HealthReportGenerator:
             )
             
             doc.addPageTemplates([template])
-            
-            # Initialize content
-            content = []
-            
-            # Add cover page
-            content.extend(self._create_cover_page(patient_data))
-            content.append(PageBreak())
-            
-            # Add table of contents
-            content.extend(self._create_table_of_contents())
-            content.append(PageBreak())
-            
+        
+        # Initialize content
+        content = []
+        
+        # Add cover page
+        content.extend(self._create_cover_page(patient_data))
+        content.append(PageBreak())
+        
+        # Add table of contents
+        content.extend(self._create_table_of_contents())
+        content.append(PageBreak())
+        
             # Add doctor summary
             content.extend(self._create_doctor_summary(patient_data, structured_data))
             content.append(PageBreak())
-            
+        
             # Add wellbeing index
             content.extend(self._create_wellbeing_index(patient_data))
             content.append(PageBreak())
-            
+        
             # Add important parameters
             content.extend(self._create_important_parameters(structured_data))
             
             # Add detailed analysis if interpretation is available
-            if interpretation:
+        if interpretation:
                 try:
                     content.extend(self._create_executive_summary(interpretation))
                 except Exception as e:
@@ -696,8 +696,8 @@ class HealthReportGenerator:
                 # Add category header
                 category_title = Paragraph(category, self.styles['ReportSectionTitle'])
                 content.append(category_title)
-                content.append(Spacer(1, 0.1*inch))
-                
+            content.append(Spacer(1, 0.1*inch))
+            
                 # Add category description
                 description = self._get_category_description(category)
                 category_desc = Paragraph(description, self.styles['Normal'])
@@ -711,7 +711,7 @@ class HealthReportGenerator:
             content.append(Spacer(1, 0.1*inch))
             
             content.append(Spacer(1, 0.2*inch))
-        else:
+                else:
             # Fallback if no lab results
             no_results = Paragraph("No laboratory results available for analysis.", self.styles['Normal'])
             content.append(no_results)
@@ -798,8 +798,8 @@ class HealthReportGenerator:
         # Add section title
         title = Paragraph("Test Results Analysis", self.styles['ReportSectionTitle'])
         content.append(title)
-        content.append(Spacer(1, 0.1*inch))
-        
+                    content.append(Spacer(1, 0.1*inch))
+                    
         # Add introduction
         intro = Paragraph(
             "The following analysis is based on your laboratory test results. "
@@ -807,8 +807,8 @@ class HealthReportGenerator:
             self.styles['Normal']
         )
         content.append(intro)
-        content.append(Spacer(1, 0.2*inch))
-        
+                    content.append(Spacer(1, 0.2*inch))
+                
         if structured_data:
             # Find abnormal results
             abnormal_results = [test for test in structured_data if test.get('Status', '') != 'Normal']
@@ -816,8 +816,8 @@ class HealthReportGenerator:
             if abnormal_results:
                 abnormal_title = Paragraph("Abnormal Test Results", self.styles['ReportSectionTitle'])
                 content.append(abnormal_title)
-                content.append(Spacer(1, 0.1*inch))
-                
+            content.append(Spacer(1, 0.1*inch))
+            
                 for test in abnormal_results:
                     test_name = Paragraph(f"<b>{test.get('Test', '')}</b>: {test.get('Value', '')}", 
                                         self.styles['Normal'])
@@ -901,8 +901,8 @@ class HealthReportGenerator:
         # Create sleep hygiene section
         sleep_title = Paragraph("Sleep hygiene", self.styles['ReportSectionTitle'])
         content.append(sleep_title)
-        content.append(Spacer(1, 0.1*inch))
-        
+                content.append(Spacer(1, 0.1*inch))
+            
         # Create sleep dos table
         sleep_dos = [
             ["Do's"],
@@ -925,13 +925,13 @@ class HealthReportGenerator:
         ]))
         
         content.append(sleep_dos_table)
-        content.append(Spacer(1, 0.2*inch))
+                content.append(Spacer(1, 0.2*inch))
         
         # Create exercise section
         exercise_title = Paragraph("Exercise", self.styles['ReportSectionTitle'])
         content.append(exercise_title)
-        content.append(Spacer(1, 0.1*inch))
-        
+            content.append(Spacer(1, 0.1*inch))
+            
         # Create exercise dos table
         exercise_dos = [
             ["Do's"],
@@ -964,7 +964,7 @@ class HealthReportGenerator:
                 specific_title = Paragraph("Specific Recommendations Based on Your Results", self.styles['ReportSectionTitle'])
                 content.append(specific_title)
                 content.append(Spacer(1, 0.1*inch))
-                
+        
                 for test in abnormal_results:
                     recommendations = self._get_specific_recommendations(test.get('Test', ''))
                     if recommendations:
@@ -1057,7 +1057,7 @@ class HealthReportGenerator:
         for ref in references:
             ref_para = Paragraph(ref, self.styles['Normal'])
             content.append(ref_para)
-            content.append(Spacer(1, 0.1*inch))
+        content.append(Spacer(1, 0.1*inch))
         
         # Add end of report marker
         content.append(Spacer(1, 0.5*inch))
