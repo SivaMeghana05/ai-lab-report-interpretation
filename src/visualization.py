@@ -69,6 +69,11 @@ class VisualizationService:
         """Create enhanced severity distribution chart"""
         plt.clf()  # Clear any existing plots
         
+        # Ensure Severity column exists
+        if 'Severity' not in df.columns:
+            # Add Severity based on Status
+            df['Severity'] = df.apply(lambda row: 'None' if row.get('Status', '') == 'Normal' else 'Moderate', axis=1)
+        
         # Count severities
         severity_counts = df['Severity'].value_counts()
         
@@ -137,6 +142,12 @@ class VisualizationService:
     def create_category_chart(self, df):
         """Create enhanced test category distribution chart"""
         plt.clf()  # Clear any existing plots
+        
+        # Ensure required columns exist
+        if 'Category' not in df.columns:
+            df['Category'] = 'Other Tests'
+        if 'Status' not in df.columns:
+            df['Status'] = 'Normal'
         
         # Get category counts
         category_counts = df['Category'].value_counts()
@@ -335,16 +346,30 @@ class VisualizationService:
     
     def extract_health_score(self, interpretation):
         """Extract health score from interpretation text"""
-        if not interpretation:
-            return 0
+        try:
+            if not interpretation:
+                return 0
             
-        # Look for patterns like "Health score: 75 (out of 100)"
-        for line in interpretation.split('\n'):
-            if 'score' in line.lower() and '(' in line and ')' in line:
-                score_text = line.split('(')[1].split(')')[0]
-                try:
-                    return int(re.search(r'\d+', score_text).group())
-                except:
-                    pass
-        
-        return 0
+            # Convert interpretation to string if it's a response object
+            if hasattr(interpretation, 'text'):
+                interpretation_text = interpretation.text
+            elif hasattr(interpretation, 'parts'):
+                interpretation_text = ''.join([part.text for part in interpretation.parts])
+            elif isinstance(interpretation, str):
+                interpretation_text = interpretation
+            else:
+                interpretation_text = str(interpretation)
+            
+            # Look for patterns like "Health score: 75 (out of 100)"
+            for line in interpretation_text.split('\n'):
+                if 'score' in line.lower() and '(' in line and ')' in line:
+                    score_text = line.split('(')[1].split(')')[0]
+                    try:
+                        return int(re.search(r'\d+', score_text).group())
+                    except:
+                        pass
+            
+            return 0
+        except Exception as e:
+            logger.error(f"Error extracting health score: {str(e)}")
+            return 0

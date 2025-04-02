@@ -140,25 +140,27 @@ class HealthReportGenerator:
             alignment=TA_CENTER
         ))
 
-    def create_pdf_report(self, patient_data, structured_data=None, interpretation=None, visualization_service=None):
+    def create_pdf_report(self, patient_data, structured_data=None, interpretation=None, visualization_data=None):
         """Create a comprehensive health report PDF"""
+        buffer = None
+        temp_files = []  # Keep track of temp files
         try:
-        buffer = BytesIO()
-        
+            buffer = BytesIO()
+            
             # Create document
-        doc = SimpleDocTemplate(
-            buffer,
-            pagesize=letter,
-            rightMargin=0.5*inch,
-            leftMargin=0.5*inch,
+            doc = SimpleDocTemplate(
+                buffer,
+                pagesize=letter,
+                rightMargin=0.5*inch,
+                leftMargin=0.5*inch,
                 topMargin=0.75*inch,
                 bottomMargin=0.75*inch,
-            title=f"Health Report - {patient_data.get('Name', 'Patient')}",
+                title=f"Health Report - {patient_data.get('Name', 'Patient')}",
                 author="HealthLensAI",
-            subject="Medical Lab Report Analysis",
-            keywords="health, medical, lab, report, analysis"
-        )
-        
+                subject="Medical Lab Report Analysis",
+                keywords="health, medical, lab, report, analysis"
+            )
+            
             # Create page templates with headers and footers
             def header_footer(canvas, doc):
                 canvas.saveState()
@@ -181,7 +183,7 @@ class HealthReportGenerator:
                 
                 canvas.restoreState()
             
-        # Create page templates
+            # Create page templates
             frame = Frame(
                 doc.leftMargin, 
                 doc.bottomMargin, 
@@ -197,31 +199,31 @@ class HealthReportGenerator:
             )
             
             doc.addPageTemplates([template])
-        
-        # Initialize content
-        content = []
-        
-        # Add cover page
-        content.extend(self._create_cover_page(patient_data))
-        content.append(PageBreak())
-        
-        # Add table of contents
-        content.extend(self._create_table_of_contents())
-        content.append(PageBreak())
-        
+            
+            # Initialize content
+            content = []
+            
+            # Add cover page
+            content.extend(self._create_cover_page(patient_data))
+            content.append(PageBreak())
+            
+            # Add table of contents
+            content.extend(self._create_table_of_contents())
+            content.append(PageBreak())
+            
             # Add doctor summary
             content.extend(self._create_doctor_summary(patient_data, structured_data))
             content.append(PageBreak())
-        
+            
             # Add wellbeing index
             content.extend(self._create_wellbeing_index(patient_data))
             content.append(PageBreak())
-        
+            
             # Add important parameters
             content.extend(self._create_important_parameters(structured_data))
             
             # Add detailed analysis if interpretation is available
-        if interpretation:
+            if interpretation:
                 try:
                     content.extend(self._create_executive_summary(interpretation))
                 except Exception as e:
@@ -229,6 +231,27 @@ class HealthReportGenerator:
                     content.extend(self._create_fallback_analysis(structured_data))
             else:
                 content.extend(self._create_fallback_analysis(structured_data))
+            
+            # Add visualization section if visualization data is available
+            if visualization_data:
+                try:
+                    vis_content, vis_temp_files = self._create_visualization_section(visualization_data)
+                    content.extend(vis_content)
+                    temp_files.extend(vis_temp_files)  # Keep track of temp files
+                except Exception as e:
+                    logger.error(f"Error creating visualization section: {str(e)}")
+                    # If visualization section fails, try using the lab analysis section as fallback
+                    if structured_data:
+                        try:
+                            content.extend(self._create_lab_analysis_section(structured_data))
+                        except Exception as e2:
+                            logger.error(f"Error creating fallback lab analysis section: {str(e2)}")
+            # If no visualization data but structured data is available, use the lab analysis section
+            elif structured_data:
+                try:
+                    content.extend(self._create_lab_analysis_section(structured_data))
+                except Exception as e:
+                    logger.error(f"Error creating lab analysis section: {str(e)}")
             
             # Add health recommendations
             content.extend(self._create_health_recommendations(structured_data))
@@ -242,12 +265,19 @@ class HealthReportGenerator:
             # Build the document
             doc.build(content)
             pdf_content = buffer.getvalue()
-            buffer.close()
             return pdf_content
-            
         except Exception as e:
             logger.error(f"Error generating PDF: {str(e)}\n{traceback.format_exc()}")
             return self._create_error_pdf(patient_data, str(e))
+        finally:
+            # Clean up resources
+            if buffer:
+                buffer.close()
+            for temp_file in temp_files:
+                try:
+                    temp_file.close()
+                except:
+                    pass
     
     def _create_error_pdf(self, patient_data, error_message):
         """Create a simple error PDF when the main report generation fails"""
@@ -696,8 +726,8 @@ class HealthReportGenerator:
                 # Add category header
                 category_title = Paragraph(category, self.styles['ReportSectionTitle'])
                 content.append(category_title)
-            content.append(Spacer(1, 0.1*inch))
-            
+                content.append(Spacer(1, 0.1*inch))
+                
                 # Add category description
                 description = self._get_category_description(category)
                 category_desc = Paragraph(description, self.styles['Normal'])
@@ -708,10 +738,10 @@ class HealthReportGenerator:
                 for test in tests:
                     param_box = self._create_parameter_box(test)
                     content.append(param_box)
-            content.append(Spacer(1, 0.1*inch))
+                content.append(Spacer(1, 0.1*inch))
             
             content.append(Spacer(1, 0.2*inch))
-                else:
+        else:
             # Fallback if no lab results
             no_results = Paragraph("No laboratory results available for analysis.", self.styles['Normal'])
             content.append(no_results)
@@ -798,8 +828,8 @@ class HealthReportGenerator:
         # Add section title
         title = Paragraph("Test Results Analysis", self.styles['ReportSectionTitle'])
         content.append(title)
-                    content.append(Spacer(1, 0.1*inch))
-                    
+        content.append(Spacer(1, 0.1*inch))
+        
         # Add introduction
         intro = Paragraph(
             "The following analysis is based on your laboratory test results. "
@@ -807,8 +837,8 @@ class HealthReportGenerator:
             self.styles['Normal']
         )
         content.append(intro)
-                    content.append(Spacer(1, 0.2*inch))
-                
+        content.append(Spacer(1, 0.2*inch))
+        
         if structured_data:
             # Find abnormal results
             abnormal_results = [test for test in structured_data if test.get('Status', '') != 'Normal']
@@ -816,8 +846,8 @@ class HealthReportGenerator:
             if abnormal_results:
                 abnormal_title = Paragraph("Abnormal Test Results", self.styles['ReportSectionTitle'])
                 content.append(abnormal_title)
-            content.append(Spacer(1, 0.1*inch))
-            
+                content.append(Spacer(1, 0.1*inch))
+                
                 for test in abnormal_results:
                     test_name = Paragraph(f"<b>{test.get('Test', '')}</b>: {test.get('Value', '')}", 
                                         self.styles['Normal'])
@@ -901,8 +931,8 @@ class HealthReportGenerator:
         # Create sleep hygiene section
         sleep_title = Paragraph("Sleep hygiene", self.styles['ReportSectionTitle'])
         content.append(sleep_title)
-                content.append(Spacer(1, 0.1*inch))
-            
+        content.append(Spacer(1, 0.1*inch))
+        
         # Create sleep dos table
         sleep_dos = [
             ["Do's"],
@@ -925,13 +955,13 @@ class HealthReportGenerator:
         ]))
         
         content.append(sleep_dos_table)
-                content.append(Spacer(1, 0.2*inch))
+        content.append(Spacer(1, 0.2*inch))
         
         # Create exercise section
         exercise_title = Paragraph("Exercise", self.styles['ReportSectionTitle'])
         content.append(exercise_title)
-            content.append(Spacer(1, 0.1*inch))
-            
+        content.append(Spacer(1, 0.1*inch))
+        
         # Create exercise dos table
         exercise_dos = [
             ["Do's"],
@@ -1355,3 +1385,43 @@ class HealthReportGenerator:
             import streamlit as st
             st.warning("Error displaying detailed test results. Showing basic table instead.")
             st.dataframe(df, use_container_width=True)
+
+    def _create_visualization_section(self, visualization_data):
+        """Create visualization section with charts"""
+        content = []
+        temp_files = []  # Keep track of temp files to close later
+        
+        try:
+            if not visualization_data or "charts" not in visualization_data:
+                logger.warning("No visualization data available")
+                return content
+            
+            # Add section title
+            title = Paragraph("Visualizations", self.styles['ReportSectionTitle'])
+            content.append(title)
+            content.append(Spacer(1, 0.2*inch))
+            
+            # Process each chart
+            for chart_name, chart_fig in visualization_data["charts"].items():
+                try:
+                    # Save chart to temporary file
+                    temp_file = BytesIO()
+                    temp_files.append(temp_file)  # Keep reference to close later
+                    chart_fig.savefig(temp_file, format='png', bbox_inches='tight', dpi=300)
+                    temp_file.seek(0)
+                    
+                    # Create image and add to content
+                    img = Image(temp_file, width=6*inch, height=4*inch)
+                    content.append(img)
+                    content.append(Spacer(1, 0.3*inch))
+                    
+                    # Clean up matplotlib figure
+                    plt.close(chart_fig)
+                except Exception as e:
+                    logger.error(f"Error adding chart {chart_name}: {str(e)}")
+                    continue
+            
+            return content, temp_files
+        except Exception as e:
+            logger.error(f"Error creating visualization section: {str(e)}")
+            return content, temp_files

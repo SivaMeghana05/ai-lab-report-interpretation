@@ -1,6 +1,7 @@
 from src.report_generator import HealthReportGenerator
 from datetime import datetime
 
+
 def main():
     # Sample patient data
     patient_data = {
@@ -11,7 +12,7 @@ def main():
         "test_date": datetime.now().strftime("%Y-%m-%d"),
         "collection_date": datetime.now().strftime("%Y-%m-%d")
     }
-    
+   
     # Sample lab results with comprehensive test data
     lab_results = [
         {
@@ -60,30 +61,30 @@ def main():
             "severity": "Moderate"
         }
     ]
-    
+   
     # Sample interpretation from AI analysis
     interpretation = """
     EXECUTIVE SUMMARY
     Your recent lab results indicate several areas that require attention, particularly related to blood sugar, cholesterol, and vitamin D levels. While most deviations are mild to moderate, they suggest the need for lifestyle modifications and possibly medical intervention.
-    
+   
     DETAILED ANALYSIS BY CATEGORY
-    
+   
     Complete Blood Count:
     - Hemoglobin is slightly below normal range, indicating mild anemia
     - This may be contributing to fatigue and reduced energy levels
-    
+   
     Diabetes Profile:
     - Fasting glucose is elevated, suggesting pre-diabetes
     - Early intervention through diet and lifestyle changes is recommended
-    
+   
     Lipid Profile:
     - Both total cholesterol and HDL (good cholesterol) need attention
     - Current levels indicate moderate cardiovascular risk
-    
+   
     Vitamin Profile:
     - Vitamin D deficiency detected
     - This can affect bone health and immune function
-    
+   
     RECOMMENDATIONS
     1. Schedule a follow-up with your primary care physician
     2. Consider dietary modifications to address cholesterol and blood sugar
@@ -91,7 +92,7 @@ def main():
     4. Implement regular exercise routine
     5. Consider iron-rich foods to address mild anemia
     """
-    
+   
     # Structured data for visualizations
     structured_data = {
         "test_categories": ["CBC", "Diabetes", "Lipids", "Vitamins"],
@@ -108,6 +109,7 @@ def main():
         }
     }
 
+
     # Create report
     try:
         report_generator = HealthReportGenerator()
@@ -117,7 +119,7 @@ def main():
             interpretation=interpretation,
             structured_data=structured_data
         )
-        
+       
         # Save PDF
         if pdf_content:
             output_file = f"health_report_{patient_data['id']}_{datetime.now().strftime('%Y%m%d')}.pdf"
@@ -126,9 +128,10 @@ def main():
             print(f"Report generated successfully: {output_file}")
         else:
             print("Failed to generate report: No content generated")
-            
+           
     except Exception as e:
         print(f"Error generating report: {str(e)}")
 
+
 if __name__ == "__main__":
-    main() 
+    main()

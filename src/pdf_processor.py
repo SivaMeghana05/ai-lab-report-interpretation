@@ -55,23 +55,28 @@ class AdvancedPDFProcessor:
         Extract text from a PDF file with enhanced layout preservation
         
         Args:
-            pdf_file: File object or path to PDF file
+            pdf_file: File object, path to PDF file, or bytes-like object
             
         Returns:
             str: Extracted text with preserved layout
         """
+        doc = None
         try:
-            # Handle both file objects and paths
+            # Handle different input types
             if isinstance(pdf_file, (str, Path)):
-                pdf_path = str(pdf_file)
+                # If it's a file path
+                doc = fitz.open(str(pdf_file))
+            elif isinstance(pdf_file, (bytes, bytearray)):
+                # If it's bytes data
+                doc = fitz.open(stream=pdf_file)
+            elif isinstance(pdf_file, io.BytesIO):
+                # If it's a BytesIO object
+                doc = fitz.open(stream=pdf_file.getvalue())
             else:
-                # If it's a file object, read the content
-                pdf_content = pdf_file.read()
-                # Create a temporary buffer
-                buffer = io.BytesIO(pdf_content)
-                pdf_path = buffer
+                # If it's a file-like object
+                content = pdf_file.read()
+                doc = fitz.open(stream=content)
             
-            doc = fitz.open(pdf_path)
             text_content = []
             
             for page_num in range(len(doc)):
@@ -85,8 +90,6 @@ class AdvancedPDFProcessor:
                 if page_num > 0 and page_num % 10 == 0:
                     logger.info(f"Processed {page_num} pages...")
             
-            doc.close()
-            
             # Join all pages with proper spacing
             full_text = "\n\n".join(text_content)
             
@@ -99,6 +102,9 @@ class AdvancedPDFProcessor:
         except Exception as e:
             logger.error(f"Error extracting text from PDF: {str(e)}")
             return f"Error: {str(e)}"
+        finally:
+            if doc:
+                doc.close()
     
     def parse_medical_report(self, text: str) -> Dict:
         """

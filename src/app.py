@@ -10,6 +10,7 @@ import traceback
 import matplotlib
 matplotlib.use('Agg')  # Use non-interactive backend
 import matplotlib.pyplot as plt
+import pandas as pd
 
 # Configure logging
 logging.basicConfig(
@@ -274,8 +275,23 @@ if uploaded_file:
             }
             
             try:
+                # Generate visualization data first
+                visualization_data = {
+                    "charts": {
+                        "health_score": visualization_service.create_health_score_chart(
+                            visualization_service.extract_health_score(interpretation)
+                        ),
+                        "severity": visualization_service.create_severity_chart(
+                            pd.DataFrame(structured_data)
+                        ),
+                        "category": visualization_service.create_category_chart(
+                            pd.DataFrame(structured_data)
+                        )
+                    }
+                }
+                
                 pdf_content = report_generator.create_pdf_report(
-                    patient_data, structured_data, interpretation, visualization_service
+                    patient_data, structured_data, interpretation, visualization_data
                 )
                 
                 if pdf_content is None:
@@ -285,6 +301,15 @@ if uploaded_file:
                     # Store PDF in session state
                     st.session_state.pdf_content = pdf_content
                     logger.info("PDF report generated successfully")
+                    
+                    # Add download button
+                    st.download_button(
+                        label="📥 Download Detailed PDF Report",
+                        data=pdf_content,
+                        file_name=f"health_report_{datetime.now().strftime('%Y%m%d_%H%M%S')}.pdf",
+                        mime="application/pdf",
+                        help="Download a comprehensive PDF report with all analysis and visualizations"
+                    )
             except Exception as e:
                 st.error(f"Error generating PDF report: {str(e)}")
                 logger.error(f"PDF generation error: {str(e)}\n{traceback.format_exc()}")
@@ -319,9 +344,6 @@ if 'processing_complete' in st.session_state and st.session_state.processing_com
         # Display visualizations with better error handling
         try:
             if 'lab_data' in st.session_state and st.session_state.lab_data:
-                import pandas as pd
-                df = pd.DataFrame(st.session_state.lab_data)
-                
                 # Display health score gauge with error handling
                 try:
                     health_score = visualization_service.extract_health_score(st.session_state.interpretation)
@@ -337,7 +359,7 @@ if 'processing_complete' in st.session_state and st.session_state.processing_com
                 # Display severity distribution with error handling
                 try:
                     st.markdown("### Test Result Severity Distribution")
-                    fig = visualization_service.create_severity_chart(df)
+                    fig = visualization_service.create_severity_chart(pd.DataFrame(st.session_state.lab_data))
                     st.pyplot(fig)
                     plt.close(fig)  # Clean up
                 except Exception as e:
@@ -347,7 +369,7 @@ if 'processing_complete' in st.session_state and st.session_state.processing_com
                 # Display category distribution with error handling
                 try:
                     st.markdown("### Test Categories Analysis")
-                    fig = visualization_service.create_category_chart(df)
+                    fig = visualization_service.create_category_chart(pd.DataFrame(st.session_state.lab_data))
                     st.pyplot(fig)
                     plt.close(fig)  # Clean up
                 except Exception as e:
@@ -361,7 +383,6 @@ if 'processing_complete' in st.session_state and st.session_state.processing_com
     with tab3:
         # Display raw test results
         if 'lab_data' in st.session_state and st.session_state.lab_data:
-            import pandas as pd
             df = pd.DataFrame(st.session_state.lab_data)
             
             st.markdown("### Raw Test Results")
@@ -388,9 +409,7 @@ if 'processing_complete' in st.session_state and st.session_state.processing_com
     
     # Display detailed test results
     if 'lab_data' in st.session_state and st.session_state.lab_data:
-        import pandas as pd
-        df = pd.DataFrame(st.session_state.lab_data)
-        report_analyzer.display_test_results(df)
+        report_analyzer.display_test_results(pd.DataFrame(st.session_state.lab_data))
 
 # Footer
 st.markdown("---")
